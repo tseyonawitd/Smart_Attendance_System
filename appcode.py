@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import os
 from datetime import datetime
-
+from your_recognition_module import recognize_image  
 
 st.set_page_config(page_title="Smart Attendance System", page_icon="🎓", layout="centered")
 
@@ -57,6 +57,19 @@ elif menu == "Upload Data":
         st.success("Attendance image uploaded successfully.")
 
     st.markdown("### 3. Run Attendance Recognition")
+
+    # Upload image
+uploaded_file = st.file_uploader("Choose an image", type=["jpg", "png"])
+
+# Button to run recognition
+if st.button("Run Recognition", key="run_recognition_button"):
+    if uploaded_file is not None:
+        # Call your recognition function here
+        result = recognize_image(uploaded_file)
+        st.success("Recognition complete!")
+        st.image(result)  # or display whatever your function returns
+    else:
+        st.warning("Please upload an image first!")
 
     # First button
     if st.button("Run Recognition", key="run_recognition_main"):
