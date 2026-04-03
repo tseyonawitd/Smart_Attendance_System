@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 
-st.set_page_config(page_title="Smart Attendance System", page_icon="🎓", layout="wide")
+st.set_page_config(page_title="Smart Attendance System", page_icon="🎓", layout="centered")
 
 st.title("🎓 Smart Attendance Management System")
 st.markdown("### AI-Based Attendance Tracking and Recognition")
@@ -29,7 +29,7 @@ elif menu == "Upload Data":
     )
 
     if st.button("Run Recognition"):
-        recognized_students = ["Selam", "Abebe", "Ruth", "Tseyon"]
+        recognized_students = ["Student1", "Student2", "Student3", "Student4","Student5","Student6"]
 
         df = pd.DataFrame({
             "Name": recognized_students,
