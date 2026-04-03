@@ -58,7 +58,7 @@ elif menu == "Upload Data":
 
     st.markdown("### 3. Run Attendance Recognition")
 
-    if st.button("Run Recognition"):
+    if st.button("Run Recognition", key="run_recognition_btn"):
         if not attendance_file:
             st.warning("Please upload an attendance image first.")
         else:
