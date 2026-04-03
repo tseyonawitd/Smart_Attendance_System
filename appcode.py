@@ -1,3 +1,4 @@
+pip install opencv-python pillow pandas streamlit
 import streamlit as st
 import pandas as pd
 import os
