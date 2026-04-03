@@ -2,7 +2,16 @@ import streamlit as st
 import pandas as pd
 import os
 from datetime import datetime
-from your_recognition_module import recognize_image  
+from PIL import Image
+import numpy as np
+import cv2
+
+def recognize_image(uploaded_file):
+    img = Image.open(uploaded_file)
+    img_array = np.array(img)
+    # Example: convert to grayscale (replace with your real recognition)
+    gray = cv2.cvtColor(img_array, cv2.COLOR_BGR2GRAY)
+    return Image.fromarray(gray) 
 
 st.set_page_config(page_title="Smart Attendance System", page_icon="🎓", layout="centered")
 
@@ -70,20 +79,8 @@ if st.button("Run Recognition", key="run_recognition_button"):
         st.image(result)  # or display whatever your function returns
     else:
         st.warning("Please upload an image first!")
-
-    # First button
-    if st.button("Run Recognition", key="run_recognition_main"):
-        st.write("Recognition started!")
         
-    # Another button somewhere else
-    if st.button("Run Recognition", key="run_recognition_secondary"):
-        st.write("Secondary recognition triggered!")
-
-    if st.button("Run Recognition", key="run_recognition_btn"):
-        if not attendance_file:
-            st.warning("Please upload an attendance image first.")
-        else:
-            recognized_students = []
+        recognized_students = []
 
             student_folder = "student_images"
             attendance_path = os.path.join("attendance_input", attendance_file.name)
