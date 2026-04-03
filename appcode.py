@@ -1,25 +1,21 @@
-pip install opencv-python pillow pandas streamlit
 import streamlit as st
 import pandas as pd
 import os
 from datetime import datetime
 from PIL import Image
-import numpy as np
-import cv2
 
 # -------------------------------
-# Recognition function
+# Recognition function (Pillow only)
 # -------------------------------
 def recognize_image(attendance_file):
     """
-    Example recognition function.
-    Replace this with actual face recognition logic.
+    Simple recognition placeholder using Pillow only.
+    Replace this with real face recognition later if you can install libraries.
     """
     img = Image.open(attendance_file)
-    img_array = np.array(img)
-    # Example: convert to grayscale (placeholder for real recognition)
-    gray = cv2.cvtColor(img_array, cv2.COLOR_BGR2GRAY)
-    return Image.fromarray(gray)
+    # Convert to RGB to ensure consistent format
+    img = img.convert("RGB")
+    return img  # return the image to display
 
 # -------------------------------
 # Streamlit page setup
@@ -78,7 +74,7 @@ elif menu == "Upload Data":
         else:
             recognized_students = []
 
-            # Example recognition logic (replace with actual face recognition)
+            # Example recognition logic (replace with real face recognition)
             for file in student_files:
                 name = file.name.split(".")[0]
                 recognized_students.append(name)  # Placeholder: assume all recognized
@@ -109,6 +105,9 @@ elif menu == "Upload Data":
                 st.write("### Recognized Students:")
                 for name in recognized_students:
                     st.write(f"✔ {name}")
+
+                # Show uploaded attendance image
+                st.image(recognize_image(attendance_file), caption="Attendance Image", use_column_width=True)
             else:
                 st.warning("No matching students found.")
 
@@ -175,13 +174,12 @@ elif menu == "About Project":
     **Technologies Used:**  
     - Python  
     - Streamlit  
-    - OpenCV / DeepFace  
+    - Pillow (no OpenCV needed)  
     - Pandas  
 
     **Current Features:**  
     - Upload student reference images  
     - Upload attendance image  
-    - AI-based face comparison  
     - Attendance recording  
     - Attendance analytics  
     - CSV report export  
