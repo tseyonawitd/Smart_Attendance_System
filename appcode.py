@@ -29,7 +29,7 @@ elif menu == "Upload Data":
     )
 
     if st.button("Run Recognition"):
-        recognized_students = ["Student1", "Student2", "Student3", "Student4","Student5","Student6"]
+        recognized_students = ["Student1", "Student2", "Student3", "Student4"]
 
         df = pd.DataFrame({
             "Name": recognized_students,
