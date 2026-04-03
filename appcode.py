@@ -6,13 +6,23 @@ from PIL import Image
 import numpy as np
 import cv2
 
-def recognize_image(uploaded_file):
-    img = Image.open(uploaded_file)
+# -------------------------------
+# Recognition function
+# -------------------------------
+def recognize_image(attendance_file):
+    """
+    Example recognition function.
+    Replace this with actual face recognition logic.
+    """
+    img = Image.open(attendance_file)
     img_array = np.array(img)
-    # Example: convert to grayscale (replace with your real recognition)
+    # Example: convert to grayscale (placeholder for real recognition)
     gray = cv2.cvtColor(img_array, cv2.COLOR_BGR2GRAY)
-    return Image.fromarray(gray) 
+    return Image.fromarray(gray)
 
+# -------------------------------
+# Streamlit page setup
+# -------------------------------
 st.set_page_config(page_title="Smart Attendance System", page_icon="🎓", layout="centered")
 
 st.title("🎓 Smart Attendance Management System")
@@ -34,14 +44,14 @@ if menu == "Home":
     st.info("Use the sidebar to navigate through the system.")
 
 # -------------------------------
-# UPLOAD PAGE
+# UPLOAD DATA PAGE
 # -------------------------------
 elif menu == "Upload Data":
     st.subheader("Upload Data")
 
-    st.markdown("### 1. Upload Student Reference Images")
+    # 1️⃣ Upload student reference images
     student_files = st.file_uploader(
-        "Upload student images (use student name as file name if possible)",
+        "Upload student images (use student name as file name)",
         accept_multiple_files=True,
         type=["jpg", "jpeg", "png"]
     )
@@ -52,79 +62,39 @@ elif menu == "Upload Data":
                 f.write(file.getbuffer())
         st.success(f"{len(student_files)} student image(s) uploaded successfully.")
 
-    st.markdown("### 2. Upload Attendance Image")
+    # 2️⃣ Upload attendance image
     attendance_file = st.file_uploader(
         "Upload attendance image",
         type=["jpg", "jpeg", "png"]
     )
 
-    attendance_path = None
-    if attendance_file:
-        attendance_path = os.path.join("attendance_input", attendance_file.name)
-        with open(attendance_path, "wb") as f:
-            f.write(attendance_file.getbuffer())
-        st.success("Attendance image uploaded successfully.")
+    # 3️⃣ Run recognition
+    if st.button("Run Recognition", key="run_recognition"):
+        if attendance_file is None:
+            st.warning("Please upload an attendance image first.")
+        elif not student_files:
+            st.warning("Please upload student reference images first.")
+        else:
+            recognized_students = []
 
-    st.markdown("### 3. Run Attendance Recognition")
-
-    # Upload image
-uploaded_file = st.file_uploader("Choose an image", type=["jpg", "png"])
-
-# Button to run recognition
-if st.button("Run Recognition", key="run_recognition_button"):
-    if uploaded_file is not None:
-        # Call your recognition function here
-        result = recognize_image(uploaded_file)
-        st.success("Recognition complete!")
-        st.image(result)  # or display whatever your function returns
-    else:
-        st.warning("Please upload an image first!")
-        
-        recognized_students = []
-
-            student_folder = "student_images"
-            attendance_path = os.path.join("attendance_input", attendance_file.name)
-
-            for student_img in os.listdir(student_folder):
-                student_path = os.path.join(student_folder, student_img)
-
-                if st.button("Run Recognition"):
-                    recognized_students = []
-                    
-                    if student_files:
-                        for file in student_files:
-                            name = file.name.split(".")[0]
-                            recognized_students.append(name)
-                    
-                    if recognized_students:
-                        from datetime import datetime
-                        now = datetime.now()
-                        
-                        df = pd.DataFrame({
-                            "Name": recognized_students,
-                            "Date": [now.strftime("%Y-%m-%d")] * len(recognized_students),
-                            "Time": [now.strftime("%H:%M:%S")] * len(recognized_students),
-                            "Status": ["Present"] * len(recognized_students)
-                        })
-                        
-                        st.session_state["attendance_df"] = df
-                        st.success("Recognition completed successfully!")
+            # Example recognition logic (replace with actual face recognition)
+            for file in student_files:
+                name = file.name.split(".")[0]
+                recognized_students.append(name)  # Placeholder: assume all recognized
 
             if recognized_students:
                 now = datetime.now()
-                date_str = now.strftime("%Y-%m-%d")
-                time_str = now.strftime("%H:%M:%S")
 
                 df = pd.DataFrame({
                     "Name": recognized_students,
-                    "Date": [date_str] * len(recognized_students),
-                    "Time": [time_str] * len(recognized_students),
+                    "Date": [now.strftime("%Y-%m-%d")] * len(recognized_students),
+                    "Time": [now.strftime("%H:%M:%S")] * len(recognized_students),
                     "Status": ["Present"] * len(recognized_students)
                 })
 
                 st.session_state["attendance_df"] = df
 
-                # Save to CSV as attendance database
+                # Save to CSV
                 csv_file = "attendance_records.csv"
                 if os.path.exists(csv_file):
                     old_df = pd.read_csv(csv_file)
@@ -187,7 +157,6 @@ elif menu == "Analytics":
 
         st.markdown("### Attendance History")
         st.dataframe(df, use_container_width=True)
-
     else:
         st.warning("No attendance records available yet.")
 
@@ -205,7 +174,7 @@ elif menu == "About Project":
     **Technologies Used:**  
     - Python  
     - Streamlit  
-    - DeepFace  
+    - OpenCV / DeepFace  
     - Pandas  
 
     **Current Features:**  
