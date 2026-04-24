@@ -4,80 +4,93 @@ import os
 from datetime import datetime
 from PIL import Image
 
-# -------------------------------
-# Recognition function (Pillow only)
-# -------------------------------
-def recognize_image(attendance_file):
-    """
-    Simple recognition placeholder using Pillow only.
-    Replace this with real face recognition later if you can install libraries.
-    """
-    img = Image.open(attendance_file)
-    # Convert to RGB to ensure consistent format
-    img = img.convert("RGB")
-    return img  # return the image to display
+# Try importing DeepFace safely
+try:
+    from deepface import DeepFace
+    DEEPFACE_AVAILABLE = True
+except:
+    DEEPFACE_AVAILABLE = False
 
 # -------------------------------
-# Streamlit page setup
+# Setup
 # -------------------------------
-st.set_page_config(page_title="Smart Attendance System", page_icon="🎓", layout="centered")
+st.set_page_config(page_title="Smart Attendance System", page_icon="🎓")
 
 st.title("🎓 Smart Attendance Management System")
-st.markdown("### AI-Based Attendance Tracking and Recognition")
+st.markdown("### AI-Based Attendance Tracking")
 
 st.sidebar.title("Navigation")
-menu = st.sidebar.radio("Go to:", ["Home", "Upload Data", "Results", "Analytics", "About Project"])
+menu = st.sidebar.radio("Go to:", ["Home", "Upload Data", "Results", "Analytics"])
 
-# Ensure folders exist
 os.makedirs("student_images", exist_ok=True)
-os.makedirs("attendance_input", exist_ok=True)
 
 # -------------------------------
-# HOME PAGE
+# HOME
 # -------------------------------
 if menu == "Home":
     st.subheader("Welcome")
-    st.write("This system automates classroom attendance using AI-based face recognition.")
-    st.info("Use the sidebar to navigate through the system.")
+
+    if DEEPFACE_AVAILABLE:
+        st.success("✅ DeepFace AI loaded successfully")
+    else:
+        st.warning("⚠️ DeepFace not available — running in fallback mode")
 
 # -------------------------------
-# UPLOAD DATA PAGE
+# UPLOAD
 # -------------------------------
 elif menu == "Upload Data":
     st.subheader("Upload Data")
 
-    # 1️⃣ Upload student reference images
     student_files = st.file_uploader(
-        "Upload student images (use student name as file name)",
+        "Upload student images (filename = student name)",
         accept_multiple_files=True,
-        type=["jpg", "jpeg", "png"]
+        type=["jpg", "png", "jpeg"]
     )
 
     if student_files:
         for file in student_files:
             with open(os.path.join("student_images", file.name), "wb") as f:
                 f.write(file.getbuffer())
-        st.success(f"{len(student_files)} student image(s) uploaded successfully.")
+        st.success(f"{len(student_files)} student images uploaded.")
 
-    # 2️⃣ Upload attendance image
     attendance_file = st.file_uploader(
         "Upload attendance image",
-        type=["jpg", "jpeg", "png"]
+        type=["jpg", "png", "jpeg"]
     )
 
-    # 3️⃣ Run recognition
-    if st.button("Run Recognition", key="run_recognition"):
-        if attendance_file is None:
-            st.warning("Please upload an attendance image first.")
-        elif not student_files:
-            st.warning("Please upload student reference images first.")
+    if attendance_file:
+        st.image(attendance_file, caption="Attendance Image")
+
+    if st.button("Run Recognition"):
+        if not student_files:
+            st.warning("Upload student images first.")
+        elif not attendance_file:
+            st.warning("Upload attendance image first.")
         else:
             recognized_students = []
 
-            # Example recognition logic (replace with real face recognition)
-            for file in student_files:
-                name = file.name.split(".")[0]
-                recognized_students.append(name)  # Placeholder: assume all recognized
+            with st.spinner("Running AI recognition..."):
+                if DEEPFACE_AVAILABLE:
+                    # Try real AI
+                    for file in student_files:
+                        student_path = os.path.join("student_images", file.name)
+
+                        try:
+                            result = DeepFace.verify(
+                                img1_path=student_path,
+                                img2_path=attendance_file,
+                                enforce_detection=False
+                            )
+
+                            if result["verified"]:
+                                name = file.name.split(".")[0]
+                                recognized_students.append(name)
+
+                        except:
+                            continue
+                else:
+                    # Fallback (simulation)
+                    recognized_students = [file.name.split(".")[0] for file in student_files]
 
             if recognized_students:
                 now = datetime.now()
@@ -89,98 +102,41 @@ elif menu == "Upload Data":
                     "Status": ["Present"] * len(recognized_students)
                 })
 
-                st.session_state["attendance_df"] = df
+                st.session_state["attendance"] = df
+                df.to_csv("attendance.csv", index=False)
 
-                # Save to CSV
-                csv_file = "attendance_records.csv"
-                if os.path.exists(csv_file):
-                    old_df = pd.read_csv(csv_file)
-                    combined_df = pd.concat([old_df, df], ignore_index=True)
-                    combined_df.drop_duplicates(subset=["Name", "Date"], inplace=True)
-                    combined_df.to_csv(csv_file, index=False)
-                else:
-                    df.to_csv(csv_file, index=False)
+                st.success("Recognition complete!")
+                st.dataframe(df)
 
-                st.success("Recognition completed successfully!")
-                st.write("### Recognized Students:")
-                for name in recognized_students:
-                    st.write(f"✔ {name}")
-
-                # Show uploaded attendance image
-                st.image(recognize_image(attendance_file), caption="Attendance Image", use_column_width=True)
             else:
-                st.warning("No matching students found.")
+                st.warning("No faces matched.")
 
 # -------------------------------
-# RESULTS PAGE
+# RESULTS
 # -------------------------------
 elif menu == "Results":
-    st.subheader("Attendance Results")
+    st.subheader("Results")
 
-    if "attendance_df" in st.session_state:
-        df = st.session_state["attendance_df"]
-        st.dataframe(df, use_container_width=True)
-
-        csv = df.to_csv(index=False).encode("utf-8")
-        st.download_button("Download Attendance CSV", csv, "attendance_results.csv", "text/csv")
-    elif os.path.exists("attendance_records.csv"):
-        df = pd.read_csv("attendance_records.csv")
-        st.dataframe(df, use_container_width=True)
-
-        csv = df.to_csv(index=False).encode("utf-8")
-        st.download_button("Download Attendance CSV", csv, "attendance_results.csv", "text/csv")
+    if "attendance" in st.session_state:
+        st.dataframe(st.session_state["attendance"])
+    elif os.path.exists("attendance.csv"):
+        df = pd.read_csv("attendance.csv")
+        st.dataframe(df)
     else:
-        st.warning("No attendance data available yet. Please run recognition first.")
+        st.warning("No data yet.")
 
 # -------------------------------
-# ANALYTICS PAGE
+# ANALYTICS
 # -------------------------------
 elif menu == "Analytics":
-    st.subheader("Attendance Analytics")
+    st.subheader("Analytics")
 
-    if os.path.exists("attendance_records.csv"):
-        df = pd.read_csv("attendance_records.csv")
+    if os.path.exists("attendance.csv"):
+        df = pd.read_csv("attendance.csv")
 
-        total_present = len(df)
-        unique_students = df["Name"].nunique()
+        st.metric("Total Records", len(df))
+        st.metric("Students", df["Name"].nunique())
 
-        st.metric("Total Attendance Records", total_present)
-        st.metric("Unique Students Recognized", unique_students)
-
-        st.markdown("### Attendance Frequency by Student")
-        student_counts = df["Name"].value_counts()
-        st.bar_chart(student_counts)
-
-        st.markdown("### Attendance Status Distribution")
-        status_counts = df["Status"].value_counts()
-        st.bar_chart(status_counts)
-
-        st.markdown("### Attendance History")
-        st.dataframe(df, use_container_width=True)
+        st.bar_chart(df["Name"].value_counts())
     else:
-        st.warning("No attendance records available yet.")
-
-# -------------------------------
-# ABOUT PAGE
-# -------------------------------
-elif menu == "About Project":
-    st.subheader("About This Project")
-    st.write("""
-    **Project Title:** Smart Attendance Management System
-
-    **Objective:**  
-    To automate student attendance using AI-based facial recognition.
-
-    **Technologies Used:**  
-    - Python  
-    - Streamlit  
-    - Pillow (no OpenCV needed)  
-    - Pandas  
-
-    **Current Features:**  
-    - Upload student reference images  
-    - Upload attendance image  
-    - Attendance recording  
-    - Attendance analytics  
-    - CSV report export  
-    """)
+        st.warning("No data available.")
