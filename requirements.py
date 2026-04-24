@@ -1,4 +1,4 @@
-opencv-python
-Pillow
-pandas
 streamlit
+pandas
+Pillow
+deepface
